@@ -1,0 +1,17 @@
+:root {
+  color: #172033;
+  background: #f5f7fb;
+}
+
+body {
+  margin: 0;
+}
+
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.brand-dot {
+  color: #11b8a6;
+}
