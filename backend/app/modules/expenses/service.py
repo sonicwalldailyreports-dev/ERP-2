@@ -1,4 +1,5 @@
 import json
+from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
