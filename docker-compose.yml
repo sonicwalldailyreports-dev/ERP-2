@@ -41,7 +41,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       TASK_QUEUE_BACKEND: redis
       ENVIRONMENT: production
-      CORS_ORIGINS: ${CORS_ORIGINS:-["https://erp.example.com"]}
+      SERVICE_ROLE: migration
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
     depends_on:
       postgres:
@@ -57,8 +57,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       TASK_QUEUE_BACKEND: redis
       ENVIRONMENT: production
+      SERVICE_ROLE: api
       DEBUG: "false"
-      CORS_ORIGINS: ${CORS_ORIGINS:-["https://erp.example.com"]}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://app.auraitsol.com"]}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
@@ -86,8 +87,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       TASK_QUEUE_BACKEND: redis
       ENVIRONMENT: production
+      SERVICE_ROLE: worker
       DEBUG: "false"
-      CORS_ORIGINS: ${CORS_ORIGINS:-["https://erp.example.com"]}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
