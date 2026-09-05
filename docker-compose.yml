@@ -38,7 +38,10 @@ services:
     command: ["alembic", "upgrade", "head"]
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-small_office}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-small_office}
+      REDIS_URL: redis://redis:6379/0
+      TASK_QUEUE_BACKEND: redis
       ENVIRONMENT: production
+      SERVICE_ROLE: migration
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
     depends_on:
       postgres:
@@ -54,9 +57,10 @@ services:
       REDIS_URL: redis://redis:6379/0
       TASK_QUEUE_BACKEND: redis
       ENVIRONMENT: production
+      SERVICE_ROLE: api
       DEBUG: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://app.auraitsol.com"]}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
-      CORS_ORIGINS: ${CORS_ORIGINS:-["https://erp.example.com"]}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       migrate:
@@ -81,7 +85,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-small_office}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-small_office}
       REDIS_URL: redis://redis:6379/0
+      TASK_QUEUE_BACKEND: redis
       ENVIRONMENT: production
+      SERVICE_ROLE: worker
       DEBUG: "false"
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}

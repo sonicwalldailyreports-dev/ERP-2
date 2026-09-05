@@ -1,5 +1,7 @@
 """Notification abstraction with durable in-app and optional email delivery."""
 
+from __future__ import annotations
+
 import asyncio
 import smtplib
 from collections.abc import Iterable

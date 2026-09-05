@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -14,9 +15,17 @@ if config.config_file_name is not None and config.get_section("loggers") is not 
 target_metadata = Base.metadata
 
 
+def _database_url() -> str:
+    """Read the migration URL without validating unrelated web settings."""
+    configured = os.environ.get("DATABASE_URL")
+    if configured:
+        return configured
+    return get_settings().database_url
+
+
 def run_migrations_offline() -> None:
     context.configure(
-        url=get_settings().database_url.replace("+aiosqlite", "").replace("+asyncpg", "+psycopg"),
+        url=_database_url().replace("+aiosqlite", "").replace("+asyncpg", "+psycopg"),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -27,7 +36,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     section = config.get_section(config.config_ini_section) or {}
-    section["sqlalchemy.url"] = get_settings().database_url.replace("+aiosqlite", "").replace("+asyncpg", "+psycopg")
+    section["sqlalchemy.url"] = _database_url().replace("+aiosqlite", "").replace("+asyncpg", "+psycopg")
     connectable = engine_from_config(section, prefix="sqlalchemy.", poolclass=pool.NullPool)
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

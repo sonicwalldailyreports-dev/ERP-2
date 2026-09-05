@@ -4,7 +4,7 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision = "0016_company_scoped_financial_references"
+revision = "0016_financial_scope"
 down_revision = "0015_security_scopes"
 branch_labels = None
 depends_on = None

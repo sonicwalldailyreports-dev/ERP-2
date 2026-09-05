@@ -11,6 +11,7 @@ DEFAULT_SECRET_KEY = "development-only-secret-change-me-32-bytes"
 class Settings(BaseSettings):
     app_name: str = "Small Office Management Software"
     environment: Literal["development", "test", "production"] = "development"
+    service_role: Literal["api", "worker", "migration"] = "api"
     debug: bool = False
     api_prefix: str = "/api/v1"
     # This value is intentionally usable only for local development/tests.
@@ -62,12 +63,13 @@ class Settings(BaseSettings):
             parsed = urlparse(self.redis_url)
             if parsed.scheme not in {"redis", "rediss"} or not parsed.netloc:
                 raise ValueError("REDIS_URL must be a valid redis:// or rediss:// URL in production.")
-            if not self.cors_origins or "*" in self.cors_origins:
-                raise ValueError("CORS_ORIGINS must explicitly list allowed origins in production.")
-            for origin in self.cors_origins:
-                parsed = urlparse(origin)
-                if parsed.scheme != "https" or not parsed.netloc:
-                    raise ValueError("Production CORS origins must be valid HTTPS origins.")
+            if self.service_role == "api":
+                if not self.cors_origins or "*" in self.cors_origins:
+                    raise ValueError("CORS_ORIGINS must explicitly list allowed origins in production.")
+                for origin in self.cors_origins:
+                    parsed = urlparse(origin)
+                    if parsed.scheme != "https" or not parsed.netloc:
+                        raise ValueError("Production CORS origins must be valid HTTPS origins.")
         return self
 
 

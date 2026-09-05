@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from builtins import list as builtin_list
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -34,7 +37,7 @@ class UserRepository:
     async def list(
         self, actor_id: UUID, company_id: UUID | None, branch_id: UUID | None,
         search: str | None, status: str | None, page: int, page_size: int, global_access: bool,
-    ) -> tuple[list[User], int]:
+    ) -> tuple[builtin_list[User], int]:
         query = select(User).where(User.deleted_at.is_(None))
         if not global_access or company_id is not None:
             query = query.join(UserCompany, UserCompany.user_id == User.id).where(
@@ -59,28 +62,28 @@ class UserRepository:
         ))
         return rows, total
 
-    async def companies(self, user_id: UUID) -> list[UUID]:
+    async def companies(self, user_id: UUID) -> builtin_list[UUID]:
         return list(await self.session.scalars(
             select(UserCompany.company_id).where(UserCompany.user_id == user_id).order_by(UserCompany.company_id)
         ))
 
-    async def branches(self, user_id: UUID) -> list[tuple[UUID, UUID]]:
+    async def branches(self, user_id: UUID) -> builtin_list[tuple[UUID, UUID]]:
         return list(await self.session.execute(
             select(UserBranch.company_id, UserBranch.branch_id).where(UserBranch.user_id == user_id)
         ))
 
-    async def roles(self, user_id: UUID) -> list[UUID]:
+    async def roles(self, user_id: UUID) -> builtin_list[UUID]:
         return list(await self.session.scalars(
             select(UserRole.role_id).where(UserRole.user_id == user_id).order_by(UserRole.role_id)
         ))
 
-    async def login_history(self, user_id: UUID, limit: int) -> list[LoginHistory]:
+    async def login_history(self, user_id: UUID, limit: int) -> builtin_list[LoginHistory]:
         return list(await self.session.scalars(
             select(LoginHistory).where(LoginHistory.user_id == user_id)
             .order_by(LoginHistory.created_at.desc()).limit(limit)
         ))
 
-    async def audit_activity(self, user_id: UUID, limit: int) -> list[AuditLog]:
+    async def audit_activity(self, user_id: UUID, limit: int) -> builtin_list[AuditLog]:
         return list(await self.session.scalars(
             select(AuditLog).where(AuditLog.entity_type == "user", AuditLog.entity_id == user_id)
             .order_by(AuditLog.created_at.desc()).limit(limit)
