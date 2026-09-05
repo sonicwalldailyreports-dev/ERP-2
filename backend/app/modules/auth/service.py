@@ -67,7 +67,7 @@ class AuthService:
         return tokens
 
     async def refresh(self, refresh_token: str, user_agent: str | None, ip_address: str | None) -> TokenResponse:
-        session = await self.repository.get_session(hash_token(refresh_token))
+        session = await self.repository.get_session(hash_token(refresh_token), lock=True)
         now = datetime.now(UTC)
         if session is None or session.revoked_at is not None or self._is_expired(session.expires_at, now):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token.")
@@ -123,7 +123,7 @@ class AuthService:
         return raw_token
 
     async def confirm_password_reset(self, data: PasswordResetConfirm) -> None:
-        reset_token = await self.repository.find_password_reset_token(hash_token(data.token))
+        reset_token = await self.repository.find_password_reset_token(hash_token(data.token), lock=True)
         now = datetime.now(UTC)
         if (
             reset_token is None

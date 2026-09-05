@@ -65,7 +65,7 @@ class FinancialTransactionService:
         self,
         data: TransactionCreate | dict[str, Any] | None = None,
         actor_id: UUID | None = None,
-        is_dev_context: bool = False,
+        is_dev_context: bool | None = None,
         **values: Any,
     ) -> Transaction:
         payload = self._payload(data, values)
@@ -140,7 +140,7 @@ class FinancialTransactionService:
         self,
         data: TransactionCreate | dict[str, Any] | None = None,
         actor_id: UUID | None = None,
-        is_dev_context: bool = False,
+        is_dev_context: bool | None = None,
         **values: Any,
     ) -> Transaction:
         return await self.create(data, actor_id, is_dev_context, **values)
@@ -151,7 +151,7 @@ class FinancialTransactionService:
         actor_id: UUID | None = None,
         *,
         permission_code: str = "transactions.transaction.view",
-        is_dev_context: bool = False,
+        is_dev_context: bool | None = None,
     ) -> Transaction:
         transaction = await self.repository.get(transaction_id)
         if transaction is None:
@@ -176,7 +176,7 @@ class FinancialTransactionService:
         return await self.repository.list(company_id, branch_id, status, start_date, end_date)
 
     async def post(
-        self, transaction_id: UUID, actor_id: UUID | None = None, is_dev_context: bool = False
+        self, transaction_id: UUID, actor_id: UUID | None = None, is_dev_context: bool | None = None
     ) -> Transaction:
         transaction = await self.repository.get(transaction_id, lock=True)
         if transaction is None:
@@ -237,7 +237,7 @@ class FinancialTransactionService:
 
     async def post_transaction(
         self, transaction_id: UUID,         actor_id: UUID | None = None,
-        is_dev_context: bool = False,
+        is_dev_context: bool | None = None,
     ) -> Transaction:
         return await self.post(transaction_id, actor_id, is_dev_context)
 
@@ -248,7 +248,7 @@ class FinancialTransactionService:
         reference: str | None = None,
         description: str | None = None,
         *,
-        is_dev_context: bool = False,
+        is_dev_context: bool | None = None,
     ) -> Transaction:
         original = await self.repository.get(transaction_id, lock=True)
         if original is None:
@@ -378,10 +378,17 @@ class FinancialTransactionService:
         company_id: UUID,
         branch_id: UUID | None,
         permission_code: str,
-        is_dev_context: bool = False,
+        is_dev_context: bool | None = None,
     ) -> None:
-        if actor_id is None or is_dev_context:
+        # ``None`` retains the legacy unauthenticated service API used by
+        # isolated tests and local integrations.  API routes always pass an
+        # explicit context, so an omitted actor cannot bypass production auth.
+        if is_dev_context is None:
             return
+        if is_dev_context:
+            return
+        if actor_id is None:
+            raise TransactionAuthorizationError("Transaction scope or permission is not allowed.")
         if not await has_permission(
             self.session, actor_id, permission_code, company_id, branch_id
         ):

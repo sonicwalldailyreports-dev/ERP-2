@@ -10,5 +10,7 @@ __pycache__/
 node_modules/
 dist/
 coverage/
+*.db
+*.sqlite
+*.sqlite3
 .DS_Store
-

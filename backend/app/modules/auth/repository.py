@@ -22,8 +22,11 @@ class AuthRepository:
     async def get_user(self, user_id: UUID) -> User | None:
         return await self.session.scalar(select(User).where(User.id == user_id, User.deleted_at.is_(None)))
 
-    async def get_session(self, token_hash: str) -> AuthSession | None:
-        return await self.session.scalar(select(AuthSession).where(AuthSession.refresh_token_hash == token_hash))
+    async def get_session(self, token_hash: str, *, lock: bool = False) -> AuthSession | None:
+        query = select(AuthSession).where(AuthSession.refresh_token_hash == token_hash)
+        if lock:
+            query = query.with_for_update()
+        return await self.session.scalar(query)
 
     async def revoke_user_sessions(self, user_id: UUID) -> None:
         sessions = await self.session.scalars(
@@ -33,7 +36,10 @@ class AuthRepository:
         for session in sessions:
             session.revoked_at = now
 
-    async def find_password_reset_token(self, token_hash: str) -> PasswordResetToken | None:
-        return await self.session.scalar(
-            select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
-        )
+    async def find_password_reset_token(
+        self, token_hash: str, *, lock: bool = False
+    ) -> PasswordResetToken | None:
+        query = select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
+        if lock:
+            query = query.with_for_update()
+        return await self.session.scalar(query)

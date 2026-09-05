@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlparse
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -56,6 +57,17 @@ class Settings(BaseSettings):
                 raise ValueError("SECRET_KEY must contain sufficient entropy in production.")
             if self.dev_user_header_enabled:
                 raise ValueError("Development user headers cannot be enabled in production.")
+            if self.task_queue_backend != "redis":
+                raise ValueError("Production workers must use the Redis task queue.")
+            parsed = urlparse(self.redis_url)
+            if parsed.scheme not in {"redis", "rediss"} or not parsed.netloc:
+                raise ValueError("REDIS_URL must be a valid redis:// or rediss:// URL in production.")
+            if not self.cors_origins or "*" in self.cors_origins:
+                raise ValueError("CORS_ORIGINS must explicitly list allowed origins in production.")
+            for origin in self.cors_origins:
+                parsed = urlparse(origin)
+                if parsed.scheme != "https" or not parsed.netloc:
+                    raise ValueError("Production CORS origins must be valid HTTPS origins.")
         return self
 
 

@@ -149,6 +149,7 @@ class FinancialYear(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint("start_date < end_date", name="financial_year_dates"),
         UniqueConstraint("company_id", "name", name="uq_financial_years_company_name"),
         UniqueConstraint("company_id", "start_date", name="uq_financial_years_company_start"),
+        UniqueConstraint("company_id", "id", name="uq_financial_years_company_id"),
         ForeignKeyConstraint(["company_id"], ["companies.id"], ondelete="CASCADE"),
     )
     company_id: Mapped[uuid.UUID] = mapped_column(nullable=False, index=True)
@@ -494,11 +495,12 @@ class CashAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "cash_accounts"
     __table_args__ = (
         UniqueConstraint("company_id", "account_code", name="uq_cash_accounts_company_code"),
+        UniqueConstraint("company_id", "id", name="uq_cash_accounts_company_id"),
         ForeignKeyConstraint(["company_id"], ["companies.id"], ondelete="CASCADE"),
         ForeignKeyConstraint(
             ["branch_id", "company_id"], ["branches.id", "branches.company_id"], ondelete="CASCADE"
         ),
-        ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="SET NULL"),
+        ForeignKeyConstraint(["company_id", "account_id"], ["accounts.company_id", "accounts.id"], ondelete="RESTRICT"),
         Index("ix_cash_accounts_company_branch", "company_id", "branch_id"),
         CheckConstraint("length(trim(name)) > 0", name="cash_account_name_not_blank"),
         CheckConstraint("opening_balance >= 0", name="cash_account_opening_nonnegative"),
@@ -523,6 +525,8 @@ class CashOpeningBalance(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKeyConstraint(["cash_account_id"], ["cash_accounts.id"], ondelete="CASCADE"),
         ForeignKeyConstraint(["company_id"], ["companies.id"], ondelete="CASCADE"),
         ForeignKeyConstraint(["financial_year_id"], ["financial_years.id"], ondelete="CASCADE"),
+        ForeignKeyConstraint(["company_id", "cash_account_id"], ["cash_accounts.company_id", "cash_accounts.id"], ondelete="CASCADE"),
+        ForeignKeyConstraint(["company_id", "financial_year_id"], ["financial_years.company_id", "financial_years.id"], ondelete="CASCADE"),
         CheckConstraint("amount >= 0", name="cash_opening_amount_nonnegative"),
     )
     cash_account_id: Mapped[uuid.UUID] = mapped_column(nullable=False, index=True)
@@ -542,9 +546,9 @@ class CashTransaction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKeyConstraint(
             ["branch_id", "company_id"], ["branches.id", "branches.company_id"], ondelete="CASCADE"
         ),
-        ForeignKeyConstraint(["cash_account_id"], ["cash_accounts.id"], ondelete="RESTRICT"),
-        ForeignKeyConstraint(["target_cash_account_id"], ["cash_accounts.id"], ondelete="RESTRICT"),
-        ForeignKeyConstraint(["financial_year_id"], ["financial_years.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "cash_account_id"], ["cash_accounts.company_id", "cash_accounts.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "target_cash_account_id"], ["cash_accounts.company_id", "cash_accounts.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "financial_year_id"], ["financial_years.company_id", "financial_years.id"], ondelete="RESTRICT"),
         ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
         ForeignKeyConstraint(["submitted_by"], ["users.id"], ondelete="SET NULL"),
         ForeignKeyConstraint(["approved_by"], ["users.id"], ondelete="SET NULL"),
@@ -631,6 +635,7 @@ class ExpenseCategory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "expense_categories"
     __table_args__ = (
         UniqueConstraint("company_id", "code", name="uq_expense_categories_company_code"),
+        UniqueConstraint("company_id", "id", name="uq_expense_categories_company_id"),
         ForeignKeyConstraint(["company_id"], ["companies.id"], ondelete="CASCADE"),
         ForeignKeyConstraint(
             ["branch_id", "company_id"], ["branches.id", "branches.company_id"], ondelete="CASCADE"
@@ -657,10 +662,10 @@ class Expense(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKeyConstraint(
             ["branch_id", "company_id"], ["branches.id", "branches.company_id"], ondelete="CASCADE"
         ),
-        ForeignKeyConstraint(["financial_year_id"], ["financial_years.id"], ondelete="RESTRICT"),
-        ForeignKeyConstraint(["category_id"], ["expense_categories.id"], ondelete="RESTRICT"),
-        ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="RESTRICT"),
-        ForeignKeyConstraint(["cash_account_id"], ["cash_accounts.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "financial_year_id"], ["financial_years.company_id", "financial_years.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "category_id"], ["expense_categories.company_id", "expense_categories.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "account_id"], ["accounts.company_id", "accounts.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["company_id", "cash_account_id"], ["cash_accounts.company_id", "cash_accounts.id"], ondelete="RESTRICT"),
         ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
         ForeignKeyConstraint(["approved_by"], ["users.id"], ondelete="SET NULL"),
         ForeignKeyConstraint(["posted_by"], ["users.id"], ondelete="SET NULL"),

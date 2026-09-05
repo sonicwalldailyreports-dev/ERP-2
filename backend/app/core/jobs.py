@@ -201,7 +201,11 @@ class BackgroundWorker:
             query = query.where(BackgroundJob.company_id == company_id)
         if branch_id is not None:
             query = query.where(BackgroundJob.branch_id == branch_id)
-        job = await session.scalar(query.order_by(BackgroundJob.created_at).limit(1))
+        # Keep the claim inside the transaction.  PostgreSQL workers skip rows
+        # claimed by another worker instead of executing the same job twice.
+        job = await session.scalar(
+            query.order_by(BackgroundJob.created_at).with_for_update(skip_locked=True).limit(1)
+        )
         if job is None:
             return None
         job.status = "running"
